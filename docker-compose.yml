@@ -1,0 +1,52 @@
+name: pocket-js-server
+
+services:
+  pg:
+    image: bitnami/postgresql:13.16.0
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_USER=docker
+      - POSTGRES_PASSWORD=docker
+      - POSTGRES_DB=inorbit
+    networks:
+      - app-network
+
+  node-app-instance-1:
+      build: .
+      ports:
+        - "3000:3000"  # Porta externa 3000 para a primeira instância
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:3000"]
+        interval: 10s
+        retries: 5
+      networks:
+      - app-network
+  node-app-instance-2:
+        build: .
+        ports:
+          - "3001:3000"  # Porta externa 3001 para a segunda instância
+        healthcheck:
+          test: ["CMD", "curl", "-f", "http://localhost:3000"]
+          interval: 10s
+          retries: 5
+        networks:
+        - app-network
+
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./devops/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - node-app-instance-1
+      - node-app-instance-2
+      - pg
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
