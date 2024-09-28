@@ -9,6 +9,7 @@ RUN npm install
 
 COPY . .
 
+# RUN npx drizzle-kit generate
 RUN npm run build
 RUN npm install --production
 
